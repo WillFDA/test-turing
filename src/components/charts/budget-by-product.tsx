@@ -16,13 +16,27 @@ import { PRODUIT_COLORS } from '@/lib/types'
 
 export function BudgetByProductChart() {
   const allData = useDataStore((state) => state.data)
-  const selectedProduit = useDataStore((state) => state.filters.produit)
+  const filters = useDataStore((state) => state.filters)
 
   const chartData = useMemo(() => {
+    // Appliquer tous les filtres SAUF le filtre produit
+    const filteredData = allData.filter((ad) => {
+      if (filters.mois && ad.mois !== filters.mois) return false
+      if (filters.statut && ad.statut !== filters.statut) return false
+      if (filters.createur && ad.createur !== filters.createur) return false
+      if (filters.typeContenu && ad.typeContenu !== filters.typeContenu) return false
+      if (
+        filters.search &&
+        !ad.nomAnnonce.toLowerCase().includes(filters.search.toLowerCase())
+      )
+        return false
+      return true
+    })
+
     const grouped: Record<string, number> = {}
     let total = 0
 
-    allData.forEach((ad) => {
+    filteredData.forEach((ad) => {
       if (!grouped[ad.produit]) {
         grouped[ad.produit] = 0
       }
@@ -31,16 +45,16 @@ export function BudgetByProductChart() {
     })
 
     // Si un produit est sélectionné, montrer produit vs reste
-    if (selectedProduit) {
-      const selectedBudget = grouped[selectedProduit] || 0
+    if (filters.produit) {
+      const selectedBudget = grouped[filters.produit] || 0
       const restBudget = total - selectedBudget
 
       return [
         {
-          name: selectedProduit,
+          name: filters.produit,
           value: selectedBudget,
           percentage: total > 0 ? ((selectedBudget / total) * 100).toFixed(1) : '0',
-          color: PRODUIT_COLORS[selectedProduit] || '#6B7280',
+          color: PRODUIT_COLORS[filters.produit] || '#6B7280',
         },
         {
           name: 'Autres produits',
@@ -60,7 +74,7 @@ export function BudgetByProductChart() {
         color: PRODUIT_COLORS[name] || '#6B7280',
       }))
       .sort((a, b) => b.value - a.value)
-  }, [allData, selectedProduit])
+  }, [allData, filters])
 
   return (
     <Card>
