@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useFilteredData } from '@/hooks/use-filtered-data'
@@ -24,9 +25,10 @@ export function TopCreas() {
       <CardContent>
         <div className="space-y-3">
           {topCreas.map((crea, index) => (
-            <div
+            <Link
+              href={`/crea/${crea.id}`}
               key={crea.id}
-              className="flex items-center gap-3 rounded-lg bg-gray-50 p-3"
+              className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
             >
               <div
                 className={cn(
@@ -51,7 +53,7 @@ export function TopCreas() {
               <Badge variant="success" className="shrink-0">
                 {formatDecimal(crea.roas, 2)}
               </Badge>
-            </div>
+            </Link>
           ))}
           {topCreas.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-4">
