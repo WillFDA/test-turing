@@ -1,14 +1,17 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useFilteredData } from '@/hooks/use-filtered-data'
+import { useDataStore } from '@/store/use-data-store'
 import { formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 export function TopCreators() {
   const data = useFilteredData()
+  const setFilter = useDataStore((state) => state.setFilter)
 
   const topCreators = useMemo(() => {
     const grouped: Record<string, number> = {}
@@ -36,9 +39,11 @@ export function TopCreators() {
       <CardContent>
         <div className="space-y-3">
           {topCreators.map((creator, index) => (
-            <div
+            <Link
+              href="/crea"
               key={creator.name}
-              className="flex items-center gap-3 rounded-lg bg-gray-50 p-3"
+              onClick={() => setFilter('createur', creator.name)}
+              className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
             >
               <div
                 className={cn(
@@ -62,7 +67,7 @@ export function TopCreators() {
               <Badge variant="default" className="shrink-0 bg-blue-100 text-blue-700">
                 {formatNumber(creator.conversions)} conv.
               </Badge>
-            </div>
+            </Link>
           ))}
           {topCreators.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-4">

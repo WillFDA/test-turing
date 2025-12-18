@@ -10,18 +10,33 @@ import {
   Tooltip,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useFilteredData } from '@/hooks/use-filtered-data'
+import { useDataStore } from '@/store/use-data-store'
 import { formatCurrency } from '@/lib/utils'
 import { PRODUIT_COLORS } from '@/lib/types'
 
 export function BudgetByProductChart() {
-  const data = useFilteredData()
+  const allData = useDataStore((state) => state.data)
+  const filters = useDataStore((state) => state.filters)
 
   const chartData = useMemo(() => {
+    // Appliquer tous les filtres SAUF le filtre produit
+    const filteredData = allData.filter((ad) => {
+      if (filters.mois && ad.mois !== filters.mois) return false
+      if (filters.statut && ad.statut !== filters.statut) return false
+      if (filters.createur && ad.createur !== filters.createur) return false
+      if (filters.typeContenu && ad.typeContenu !== filters.typeContenu) return false
+      if (
+        filters.search &&
+        !ad.nomAnnonce.toLowerCase().includes(filters.search.toLowerCase())
+      )
+        return false
+      return true
+    })
+
     const grouped: Record<string, number> = {}
     let total = 0
 
-    data.forEach((ad) => {
+    filteredData.forEach((ad) => {
       if (!grouped[ad.produit]) {
         grouped[ad.produit] = 0
       }
@@ -29,6 +44,28 @@ export function BudgetByProductChart() {
       total += ad.budgetDepense
     })
 
+    // Si un produit est sélectionné, montrer produit vs reste
+    if (filters.produit) {
+      const selectedBudget = grouped[filters.produit] || 0
+      const restBudget = total - selectedBudget
+
+      return [
+        {
+          name: filters.produit,
+          value: selectedBudget,
+          percentage: total > 0 ? ((selectedBudget / total) * 100).toFixed(1) : '0',
+          color: PRODUIT_COLORS[filters.produit] || '#6B7280',
+        },
+        {
+          name: 'Autres produits',
+          value: restBudget,
+          percentage: total > 0 ? ((restBudget / total) * 100).toFixed(1) : '0',
+          color: '#D1D5DB',
+        },
+      ].filter((d) => d.value > 0)
+    }
+
+    // Sinon, montrer tous les produits
     return Object.entries(grouped)
       .map(([name, value]) => ({
         name,
@@ -37,7 +74,7 @@ export function BudgetByProductChart() {
         color: PRODUIT_COLORS[name] || '#6B7280',
       }))
       .sort((a, b) => b.value - a.value)
-  }, [data])
+  }, [allData, filters])
 
   return (
     <Card>
